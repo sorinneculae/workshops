@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>Test RIASEC</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f7f7f7; }
+    h1 { text-align: center; }
+    .question { margin-bottom: 20px; padding: 10px; background: white; border-radius: 10px; }
+    .options label { margin-right: 10px; }
+    button { display: block; margin: 20px auto; padding: 10px 20px; font-size: 16px; border: none; border-radius: 8px; background: #007bff; color: white; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .result { margin-top: 30px; font-size: 18px; text-align: center; white-space: pre-line; }
+    .description { margin-top: 20px; padding: 15px; background: #fff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    canvas { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Test RIASEC</h1>
+  
+  <form id="riasecForm"></form>
+  
+  <button type="button" onclick="calculateResult()">Descoperă rolul tău în echipă 🚀</button>
+  
+  <div id="result" class="result"></div>
+  <div id="description" class="description"></div>
+  <canvas id="riasecChart" width="400" height="200"></canvas>
+  
+  <script>
+    // întrebările, ordonate în cicluri R-I-A-S-E-C
+    const questions = [
+      // 1
+      { text: "Îmi place să repar obiecte.", type: "R" },
+      { text: "Îmi place să analizez probleme științifice.", type: "I" },
+      { text: "Îmi place să desenez sau să pictez.", type: "A" },
+      { text: "Îmi place să îi ajut pe ceilalți.", type: "S" },
+      { text: "Îmi place să conduc proiecte.", type: "E" },
+      { text: "Îmi place să lucrez cu date și cifre.", type: "C" },
+      // 2
+      { text: "Îmi place să lucrez cu unelte.", type: "R" },
+      { text: "Îmi place să fac experimente.", type: "I" },
+      { text: "Îmi place să scriu povești sau poezii.", type: "A" },
+      { text: "Îmi place să predau sau să instruiesc persoane.", type: "S" },
+      { text: "Îmi place să conving oamenii.", type: "E" },
+      { text: "Îmi place să urmez reguli și proceduri.", type: "C" },
+      // 3
+      { text: "Îmi place să lucrez afară.", type: "R" },
+      { text: "Îmi place să citesc articole științifice.", type: "I" },
+      { text: "Îmi place să cânt sau să compun muzică.", type: "A" },
+      { text: "Îmi place să lucrez cu oameni mai mult decât cu obiecte.", type: "S" },
+      { text: "Îmi place să iau decizii rapide.", type: "E" },
+      { text: "Îmi place să lucrez ordonat și organizat.", type: "C" },
+      // 4
+      { text: "Îmi place să conduc mașini sau utilaje.", type: "R" },
+      { text: "Îmi place să învăț cum funcționează lucrurile.", type: "I" },
+      { text: "Îmi place să joc teatru.", type: "A" },
+      { text: "Îmi place să ofer sprijin emoțional altora.", type: "S" },
+      { text: "Îmi place să îmi asum riscuri.", type: "E" },
+      { text: "Îmi place să fac calcule și statistici.", type: "C" },
+      // 5
+      { text: "Prefer activitățile fizice față de cele de birou.", type: "R" },
+      { text: "Îmi place să rezolv probleme abstracte.", type: "I" },
+      { text: "Îmi place să creez ceva original.", type: "A" },
+      { text: "Îmi place să lucrez în echipă.", type: "S" },
+      { text: "Îmi place să organizez și să coordonez activități.", type: "E" },
+      { text: "Îmi place să introduc date pe calculator.", type: "C" },
+      // 6
+      { text: "Îmi place să construiesc sau să montez lucruri.", type: "R" },
+      { text: "Îmi place să folosesc matematica pentru a înțelege fenomene.", type: "I" },
+      { text: "Îmi place să exprim idei prin artă.", type: "A" },
+      { text: "Îmi place să ascult problemele oamenilor.", type: "S" },
+      { text: "Îmi place să conduc o echipă.", type: "E" },
+      { text: "Îmi place să respect un program fix.", type: "C" },
+      // 7
+      { text: "Îmi place să rezolv probleme practice.", type: "R" },
+      { text: "Îmi place să cercetez informații noi.", type: "I" },
+      { text: "Îmi place să fiu creativ și spontan.", type: "A" },
+      { text: "Îmi place să încurajez și să motivez pe alții.", type: "S" },
+      { text: "Îmi place să fiu lider.", type: "E" },
+      { text: "Îmi place să am sarcini clare și bine definite.", type: "C" }
+    ];
+
+    // mapare RIASEC -> roluri
+    const roleMapping = {
+      R: "PM – Project Manager (Roadmap Keeper)",
+      I: "Analyst & Finance Lead",
+      A: "Designer (Product & Experience Lead)",
+      S: "Pitch & Storytelling Lead",
+      E: "Lider (coordonator / vision holder)",
+      C: "PM – Project Manager (Roadmap Keeper)"
+    };
+
+    // descrieri scurte RIASEC
+    const descriptions = {
+      R: "Realist (R): Preferi activități practice, concrete, care implică obiecte, unelte sau munca fizică.",
+      I: "Investigativ (I): Îți place să analizezi, să cercetezi, să înțelegi concepte și să rezolvi probleme abstracte.",
+      A: "Artistic (A): Ești creativ(ă), expresiv(ă), îți place arta, originalitatea și exprimarea liberă.",
+      S: "Social (S): Îți place să lucrezi cu oameni, să ajuți, să sprijini și să încurajezi pe alții.",
+      E: "Întreprinzător (E): Îți place să conduci, să organizezi, să convingi și să îți asumi riscuri.",
+      C: "Convențional (C): Preferi structura, ordinea, regulile clare și activitățile bine organizate."
+    };
+
+    const form = document.getElementById("riasecForm");
+
+    // generăm întrebările
+    questions.forEach((q, index) => {
+      const div = document.createElement("div");
+      div.className = "question";
+      div.innerHTML = `<p>${index + 1}. ${q.text}</p>
+        <div class="options">
+          ${[1,2,3,4,5].map(val => 
+            `<label><input type="radio" name="q${index}" value="${val},${q.type}"> ${val}</label>`
+          ).join(" ")}
+        </div>`;
+      form.appendChild(div);
+    });
+
+    let chart = null;
+
+    function calculateResult() {
+      const scores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+      const inputs = form.querySelectorAll("input[type=radio]:checked");
+
+      inputs.forEach(input => {
+        const [val, type] = input.value.split(",");
+        scores[type] += parseInt(val);
+      });
+
+      // găsim categoria dominantă
+      let max = Math.max(...Object.values(scores));
+      let dominant = Object.keys(scores).filter(k => scores[k] === max);
+
+      // afișăm scorurile
+      document.getElementById("result").innerText =
+        "Scoruri: " + JSON.stringify(scores, null, 2) +
+        "\nTipul tău dominant: " + dominant.join(", ");
+
+      // descriere + rol asociat
+      document.getElementById("description").innerHTML =
+        "<h3>Interpretare</h3>" +
+        dominant.map(d => 
+          `<p><b>${d}</b> – ${descriptions[d]}<br><i>Rol asociat:</i> ${roleMapping[d]}</p>`
+        ).join("");
+
+      // desenăm graficul
+      const ctx = document.getElementById("riasecChart").getContext("2d");
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["R", "I", "A", "S", "E", "C"],
+          datasets: [{
+            label: "Scoruri RIASEC",
+            data: [scores.R, scores.I, scores.A, scores.S, scores.E, scores.C],
+            backgroundColor: ["#007bff","#28a745","#ffc107","#17a2b8","#dc3545","#6c757d"]
+          }]
+        },
+        options: {
+          scales: { y: { beginAtZero: true, max: 35 } }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
