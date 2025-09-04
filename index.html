@@ -2,19 +2,73 @@
 <html lang="ro">
 <head>
   <meta charset="UTF-8">
-  <title>Test RIASEC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test rol</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f7f7f7; }
-    h1 { text-align: center; }
-    .question { margin-bottom: 20px; padding: 10px 30px 20px; background: white; border-radius: 10px; }
-    .options label { margin-right: 10px; }
-    button { display: block; margin: 20px auto; padding: 10px 20px; font-size: 16px; border: none; border-radius: 8px; background: #007bff; color: white; cursor: pointer; }
-    button:hover { background: #0056b3; }
-    .result { margin-top: 30px; font-size: 18px; text-align: center; white-space: pre-line; }
-    .description { margin-top: 20px; padding: 15px; background: #fff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    canvas { margin-top: 20px; }
-    .main { display: flex; justify-content: center; }
+    body {
+        font-family: Arial, sans-serif;
+        margin: 10px;
+        background: #f7f7f7;
+        line-height: 1.5;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 1.8rem; /* mai mic pe mobil */
+      }
+
+      .question {
+        margin-bottom: 15px;
+        padding: 10px 30px 20px;
+        background: white;
+        border-radius: 10px;
+      }
+
+      .options label {
+        margin-right: 10px;
+        display: inline-block;
+        margin-bottom: 5px;
+      }
+
+      button {
+        display: block;
+        margin: 20px auto;
+        padding: 10px 15px;
+        font-size: 1rem;
+        border: none;
+        border-radius: 8px;
+        background: #007bff;
+        color: white;
+        cursor: pointer;
+        width: 90%;  /* ocupă mai mult pe mobil */
+        max-width: 300px; /* nu prea mare pe desktop */
+      }
+
+      button:hover {
+        background: #0056b3;
+      }
+
+      .result, .description {
+        margin-top: 20px;
+        font-size: 1rem;
+        text-align: center;
+        padding: 10px;
+        background: #fff;
+        border-radius: 10px;
+      }
+
+      canvas {
+        margin-top: 20px;
+        width: 100% !important; /* grafice responsive */
+        height: auto !important;
+      }
+
+      #riasecForm {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 0 10px;
+      }
   </style>
 </head>
 <body>
@@ -93,6 +147,15 @@
       C: "PM – Project Manager (Roadmap Keeper)"
     };
 
+    const roleMappingShort = {
+      R: "PM",
+      I: "Analyst & Finance Lead",
+      A: "Designer",
+      S: "Storytelling Lead",
+      E: "Lider",
+      C: "PM"
+    };
+
     // descrieri scurte RIASEC
     const descriptions = {
       R: "Realist (R): Preferi activități practice, concrete, care implică obiecte, unelte sau munca fizică.",
@@ -158,7 +221,7 @@
       chart = new Chart(ctx, {
         type: "bar",
         data: {
-          labels: [roleMapping['R'], roleMapping['I'], roleMapping['A'], roleMapping['S'], roleMapping['E'], roleMapping['C']],
+          labels: [roleMappingShort['R'], roleMappingShort['I'], roleMappingShort['A'], roleMappingShort['S'], roleMappingShort['E'], roleMappingShort['C']],
           datasets: [{
             label: "Scor",
             data: [scores.R, scores.I, scores.A, scores.S, scores.E, scores.C],
