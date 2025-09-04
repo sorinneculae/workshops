@@ -14,12 +14,14 @@
     .result { margin-top: 30px; font-size: 18px; text-align: center; white-space: pre-line; }
     .description { margin-top: 20px; padding: 15px; background: #fff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     canvas { margin-top: 20px; }
+    .main { display: flex; justify-content: center; }
   </style>
 </head>
 <body>
-  <h1>Test RIASEC</h1>
-  
-  <form id="riasecForm"></form>
+  <h1>Test pentru rolul tău în echipă</h1>
+  <div class="main">
+    <form id="riasecForm"></form>
+  </div>
   
   <button type="button" onclick="calculateResult()">Descoperă rolul tău în echipă 🚀</button>
   
@@ -101,6 +103,15 @@
       C: "Convențional (C): Preferi structura, ordinea, regulile clare și activitățile bine organizate."
     };
 
+    const descriptions2 = {
+      R: "Preferi activități practice, concrete, care implică obiecte, unelte sau munca fizică.",
+      I: "Îți place să analizezi, să cercetezi, să înțelegi concepte și să rezolvi probleme abstracte.",
+      A: "Ești creativ(ă), expresiv(ă), îți place arta, originalitatea și exprimarea liberă.",
+      S: "Îți place să lucrezi cu oameni, să ajuți, să sprijini și să încurajezi pe alții.",
+      E: "Îți place să conduci, să organizezi, să convingi și să îți asumi riscuri.",
+      C: "Preferi structura, ordinea, regulile clare și activitățile bine organizate."
+    };
+
     const form = document.getElementById("riasecForm");
 
     // generăm întrebările
@@ -132,15 +143,13 @@
       let dominant = Object.keys(scores).filter(k => scores[k] === max);
 
       // afișăm scorurile
-      document.getElementById("result").innerText =
-        "Scoruri: " + JSON.stringify(scores, null, 2) +
-        "\nTipul tău dominant: " + dominant.join(", ");
+      // document.getElementById("result").innerText = "\nTipul tău dominant: " + dominant.join(", ");
 
       // descriere + rol asociat
       document.getElementById("description").innerHTML =
         "<h3>Interpretare</h3>" +
         dominant.map(d => 
-          `<p><b>${d}</b> – ${descriptions[d]}<br><i>Rol asociat:</i> ${roleMapping[d]}</p>`
+          `<p>${descriptions2[d]}<br><b><i>Rol asociat:</i> ${roleMapping[d]}</b></p>`
         ).join("");
 
       // desenăm graficul
@@ -149,9 +158,9 @@
       chart = new Chart(ctx, {
         type: "bar",
         data: {
-          labels: ["R", "I", "A", "S", "E", "C"],
+          labels: [roleMapping['R'], roleMapping['I'], roleMapping['A'], roleMapping['S'], roleMapping['E'], roleMapping['C']],
           datasets: [{
-            label: "Scoruri RIASEC",
+            label: "Scor",
             data: [scores.R, scores.I, scores.A, scores.S, scores.E, scores.C],
             backgroundColor: ["#007bff","#28a745","#ffc107","#17a2b8","#dc3545","#6c757d"]
           }]
