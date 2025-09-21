@@ -213,7 +213,8 @@
       document.getElementById("description").innerHTML =
         "<h3>Interpretare</h3>" +
         dominant.map(d => 
-          `<p>${descriptions2[d]}<br><b><i>Rol asociat:</i> ${roleMapping[d]}</b></p>`
+          `<p>${descriptions2[d]}<br><b><i>Rol asociat:</i> ${roleMapping[d]}</b></p>` +
+          `<a href="https://sorinneculae.github.io/workshops/Structura%20si%20descrieri%20roluri%20in%20echipa.pdf" target="blank">Descrierea rolurilor</a>`
         ).join("");
 
       // desenăm graficul
