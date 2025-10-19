@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test RIASEC</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 10px;
+        background: #f7f7f7;
+        line-height: 1.5;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 1.8rem; /* mai mic pe mobil */
+      }
+
+      h4 {
+        text-align: center;
+        font-size: 1.2rem;
+      }
+
+      .question {
+        margin-bottom: 15px;
+        padding: 10px 30px 20px;
+        background: white;
+        border-radius: 10px;
+      }
+
+      .options label {
+        margin-right: 10px;
+        display: inline-block;
+        margin-bottom: 5px;
+      }
+
+      button {
+        display: block;
+        margin: 20px auto;
+        padding: 10px 15px;
+        font-size: 1rem;
+        border: none;
+        border-radius: 8px;
+        background: #007bff;
+        color: white;
+        cursor: pointer;
+        width: 90%;  /* ocupă mai mult pe mobil */
+        max-width: 300px; /* nu prea mare pe desktop */
+      }
+
+      button:hover {
+        background: #0056b3;
+      }
+
+      .result, .description {
+        font-size: 1rem;
+        padding: 10px;
+        background: #fff;
+        border-radius: 10px;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      canvas {
+        margin-top: 20px;
+        width: 100% !important; /* grafice responsive */
+        height: auto !important;
+      }
+
+      #riasecForm {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 0 10px;
+      }
+  </style>
+</head>
+<body>
+  <h1>Ce drum mi se potrivește în carieră?</h1>
+  <h4> 1 - deloc ... 5 - foarte mult</h4>
+  <div class="main">
+    <form id="riasecForm"></form>
+  </div>
+
+  <button type="button" onclick="calculateResult()">Rezultat</button>
+
+  <div id="result" class="result"></div>
+  <div id="description" class="description"></div>
+  <canvas id="riasecChart" width="400" height="200"></canvas>
+  
+  <script>
+    // întrebările, ordonate în cicluri R-I-A-S-E-C
+    const questions = [
+      // 1
+      { text: "Îmi place să repar obiecte.", type: "R" },
+      { text: "Îmi place să analizez probleme științifice.", type: "I" },
+      { text: "Îmi place să desenez sau să pictez.", type: "A" },
+      { text: "Îmi place să îi ajut pe ceilalți.", type: "S" },
+      { text: "Îmi place să conduc proiecte.", type: "E" },
+      { text: "Îmi place să lucrez cu date și cifre.", type: "C" },
+      // 2
+      { text: "Îmi place să lucrez cu unelte.", type: "R" },
+      { text: "Îmi place să scriu povești sau poezii.", type: "A" },
+      { text: "Îmi place să urmez reguli și proceduri.", type: "C" },
+      { text: "Îmi place să conving oamenii.", type: "E" },
+      { text: "Îmi place să fac experimente.", type: "I" },
+      { text: "Îmi place să predau sau să instruiesc persoane.", type: "S" },
+      // 3
+      { text: "Îmi place să lucrez afară.", type: "R" },
+      { text: "Îmi place să lucrez cu oameni mai mult decât cu obiecte.", type: "S" },
+      { text: "Îmi place să lucrez ordonat și organizat.", type: "C" },
+      { text: "Îmi place să iau decizii rapide.", type: "E" },
+      { text: "Îmi place să cânt sau să compun muzică.", type: "A" },
+      { text: "Îmi place să citesc articole științifice.", type: "I" },
+      // 4
+      { text: "Îmi place să conduc mașini sau utilaje.", type: "R" },
+      { text: "Îmi place să îmi asum riscuri.", type: "E" },
+      { text: "Îmi place să ofer sprijin emoțional altora.", type: "S" },
+      { text: "Îmi place să învăț cum funcționează lucrurile.", type: "I" },
+      { text: "Îmi place să joc teatru.", type: "A" },
+      { text: "Îmi place să fac calcule și statistici.", type: "C" },
+      // 5
+      { text: "Prefer activitățile fizice față de cele de birou.", type: "R" },
+      { text: "Îmi place să introduc date pe calculator.", type: "C" },
+      { text: "Îmi place să rezolv probleme abstracte.", type: "I" },
+      { text: "Îmi place să creez ceva original.", type: "A" },
+      { text: "Îmi place să lucrez în echipă.", type: "S" },
+      { text: "Îmi place să organizez și să coordonez activități.", type: "E" },
+      // 6
+      { text: "Îmi place să construiesc sau să montez lucruri.", type: "R" },
+      { text: "Îmi place să exprim idei prin artă.", type: "A" },
+      { text: "Îmi place să folosesc matematica pentru a înțelege fenomene.", type: "I" },
+      { text: "Îmi place să ascult problemele oamenilor.", type: "S" },
+      { text: "Îmi place să respect un program fix.", type: "C" },
+      { text: "Îmi place să conduc o echipă.", type: "E" },
+      // 7
+      { text: "Îmi place să rezolv probleme practice.", type: "R" },
+      { text: "Îmi place să am sarcini clare și bine definite.", type: "C" },
+      { text: "Îmi place să cercetez informații noi.", type: "I" },
+      { text: "Îmi place să încurajez și să motivez pe alții.", type: "S" },
+      { text: "Îmi place să fiu creativ și spontan.", type: "A" },
+      { text: "Îmi place să fiu lider.", type: "E" },
+    ];
+
+    // mapare RIASEC -> roluri
+    const roleMapping = {
+      // R: "PM – Project Manager (Roadmap Keeper)",
+      E: "Lider (coordonator / vision holder)",
+      C: "PM – Project Manager (Roadmap Keeper)",
+      A: "Designer (Product & Experience Lead)",
+      S: "Pitch & Storytelling Lead",
+      I: "Analyst & Finance Lead",
+    };
+
+    const descriptionMappingShort = {
+      R: "Realist",
+      E: "Întreprinzător",
+      C: "Convențional",
+      A: "Artistic",
+      S: "Social",
+      I: "Investigativ",
+    };
+
+    // descrieri scurte RIASEC
+    const descriptions = {
+      R: `<b>Realist (R): Preferi activități practice, concrete, care implică obiecte, unelte sau munca fizică.</b><br>
+      Acești oameni sunt adesea buni la locuri de muncă în domeniul mecanicii, ingineriei sau tehnologiei.<br>
+      Persoanele realiste prefera activitati concrete, practice si fizice.<br>
+      Le place sa lucreze cu obiecte, masini sau unelte si prefera actiunea in locul teoriei.<br>
+      Sunt persoane pragmatice, stabile si orientate spre rezultate.<br><br>
+      <b>Meserii potrivite:</b><br>
+      Inginerie<br>
+      Tehnologie<br>
+      Asistent medical<br>
+      Medicină veterinară<br>
+      Calculatoare<br>
+      Construcții<br>
+      Inginerie<br>
+      Meserii in alimentație și ospitalitate<br><br>
+      <b>Meserii alternative</b><br>
+      Resurse naturale<br>
+      Servicii de sănătate<br>
+      Industrie și inginerie<br>
+      Arte și comunicare<br>
+      Tehnician in robotica<br>
+      Operator drone<br>
+      Specialist mentenanta echipamente inteligente<br>`,
+
+      I: `<b>Investigativ (I): Îți place să analizezi, să cercetezi, să înțelegi concepte și să rezolvi probleme abstracte.</b><br>
+      Preferă să observe, să învețe, să analizeze și să rezolve probleme.<br>
+      Persoanele investigative sunt curioase, logice si analitice.<br>
+      Le place sa cerceteze, sa observe si sa inteleaga cum functioneaza lucrurile.<br>
+      Prefer munca intelectuala si rezolvarea problemelor complexe.<br>
+      Sunt persoane curioase, logice și analitice.<br><br>
+      <b>Meserii potrivite:</b><br>
+      Medic<br>
+      Chimist<br>
+      Biolog<br>
+      Inginer software<br>
+      Matematician<br>
+      Psiholog<br>
+      Cercetator<br>
+      Analist de date<br><br>
+      <b>Meserii alternative</b><br>
+      Data analyst<br>
+      Specialist in inteligenta artificiala<br>
+      Expert in sustenabilitate<br>
+      `,
+      A: `<b>Artistic (A): Ești creativ(ă), expresiv(ă), îți place arta, originalitatea și exprimarea liberă.</b><br>
+      Preferă să lucreze în contexte nestructurate, în care își pot folosi creativitatea.<br>
+      Persoanele artistice sunt sensibile, imaginative și apreciază frumosul.<br>
+      Le place să creeze, să inoveze și să se exprime prin artă.<br>
+      Sunt persoane deschise, empatice și pline de idei.<br>
+      Preferă să lucreze în medii flexibile.<br>
+      Evită rutina și preferă libertatea de exprimare.<br><br>
+      <b>Meserii potrivite:</b><br>
+      Artist<br>
+      Designer<br>
+      Muzician<br>
+      Scriitor<br>
+      Actor<br>
+      Arhitect<br>
+      Fotograf<br>
+      Dansator<br><br>
+      <b>Meserii alternative</b><br>
+      Specialist UX/UI<br>
+      Creator de conținut digital<br>
+      Animator 3D<br>
+      Designer de jocuri video<br>`,
+      S: `<b>Social (S):</b> Îți place să lucrezi cu oameni, să ajuți, să sprijini și să încurajezi pe alții.</b><br>
+      Le place să lucreze cu alți oameni și săi ajute.<br>
+      Persoanele sociale sunt empatice, comunicative și prietenoase.<br>
+      Le place să colaboreze, să asculte și să sprijine pe alții.<br>
+      Sunt persoane răbdătoare, înțelegătoare și orientate spre relații.<br><br>
+      <b>Meserii potrivite:</b><br>
+      Profesor<br>
+      Asistent social<br>
+      Consilier<br>
+      Terapeut<br>
+      Asistent medical<br>
+      Antrenor<br>
+      Lucrător comunitar<br>
+      Psiholog<br><br>
+      <b>Meserii alternative</b><br>
+      Specialist în resurse umane<br>
+      Life Coach<br>
+      Facilitator de ateliere<br>
+      Consultant în dezvoltare organizațională<br>`,
+      E: `<b>Întreprinzător (E): Îți place să conduci, să organizezi, să convingi și să îți asumi riscuri.</b><br>
+      Persoanele antreprenoriale sunt energice, persuasive si orientate spre actiune.<br>
+      Le place sa conduca, sa convinga si sa isi asume riscuri.</br>
+      Au spirit de initiativa si cauta succesul prin proiecte proprii.<br>
+      Sunt persoane increzatoare, entuziaste si orientate spre obiective.<br><br>
+      <b>Meserii potrivite:</b><br>
+      Antreprenor<br>
+      Manager de vânzări<br>
+      Agent de publicitate<br>
+      Politician<br>
+      Avocat<br>
+      Manager de proiect<br>
+      Consultant de afaceri<br>
+      Director executiv<br><br>
+      <b>Meserii alternative</b><br>
+      Specialist marketing digital<br>
+      Manager de comunitate online<br>
+      Consultant în dezvoltare durabilă<br>
+      Manager de evenimente<br>`,
+      C: `<b>Convențional (C): Preferi structura, ordinea, regulile clare și activitățile bine organizate.</b><br>
+      Persoanele conventionale sunt ordonate, atente la detalii si iubesc structura.<br>
+      Le place sa lucreze cu date, cifre si informatii organizate.<br>
+      Prefer activitatile organizate, administrative si de birou.<br>
+      Se simt confortabile in reguli clare si sarcini bine definite.<br><br>
+      <b>Meserii potrivite:</b><br>
+      Contabil<br>
+      Administrator<br>
+      Bibliotecar<br>
+      Asistent administrativ<br>
+      Analist financiar<br>
+      Auditor<br>
+      Secretar<br>
+      Funcționar public<br><br>
+      <b>Meserii alternative</b><br>
+      Specialist în logistică<br>
+      Analist de date<br>
+      Consultant în managementul calității<br>
+      Coordonator de proiect<br>`,
+    };
+
+    const combinatii = {
+      RIA: "Inginer de design produs, Arhitect, Designer industrial, Tehnician proiectant, Specialist in automatizari",
+      RIS: "Medic veterinar, Biolog, Ecologist, Tehnician de laborator, Specialist in conservarea mediului",
+      RIE: "Inginer software, Dezvoltator de aplicații, Analist de sisteme, Administrator de rețea, Specialist in securitate cibernetică",
+      RIC: "Inginer mecanic, Tehnician de între ținere, Specialist in robotică, Operator de utilaje grele, Tehnician de control al calității",
+      IAS: "Profesor de stiinte, Psiholog, Jurnalist stiintific, Designer educational, Specialist in comunicare stiintifica",
+      IAE: "Analist financiar, Consultant de afaceri, Manager de proiect, Antreprenor in tehnologie, Specialist in marketing digital",
+      IAC: "Cercetator stiintific, Statistician, Analist de date, Specialist in inteligenta artificiala, Consultant in cercetare si dezvoltare",  
+      ASC: "Designer grafic, Arhitect de interior, Ilustrator, Animator 3D, Specialist in UX/UI",
+      ASE: "Manager de evenimente, Consultant in branding, Specialist in relatii publice, Antreprenor in domeniul creativ, Manager de comunitate online",
+      SEC: "Asistent social, Consilier de cariera, Terapeut ocupational, Facilitator de ateliere, Consultant in dezvoltare organizationala",
+      ECA: "Manager de vanzari, Agent de publicitate, Consultant in marketing, Antreprenor in comert electronic, Specialist in social media",
+      ECS: "Contabil, Auditor, Analist financiar, Consultant in managementul riscurilor, Specialist in conformitate",
+    };
+
+    const descriptions2 = {
+      // R: "Preferi activități practice, concrete, care implică obiecte, unelte sau munca fizică.",
+      E: "Îți place să conduci, să organizezi, să convingi și să îți asumi riscuri.",
+      C: "Preferi structura, ordinea, regulile clare și activitățile bine organizate.",
+      A: "Ești creativ(ă), expresiv(ă), îți place arta, originalitatea și exprimarea liberă.",
+      S: "Îți place să lucrezi cu oameni, să ajuți, să sprijini și să încurajezi pe alții.",
+      I: "Îți place să analizezi, să cercetezi, să înțelegi concepte și să rezolvi probleme abstracte.",
+    };
+
+    const form = document.getElementById("riasecForm");
+
+    // generăm întrebările
+    questions.forEach((q, index) => {
+      const div = document.createElement("div");
+      div.className = "question";
+      div.innerHTML = `<p>${index + 1}. ${q.text}</p>
+        <div class="options">
+          ${[1,2,3,4,5].map(val => 
+            `<label><input type="radio" name="q${index}" value="${val},${q.type}"> ${val}</label>`
+          ).join(" ")}
+        </div>`;
+      form.appendChild(div);
+    });
+
+    // function checkAllAnswered() {
+    //   const totalQuestions = questions.length;
+    //   const answeredQuestions = form.querySelectorAll("input[type=radio]:checked").length;
+    //   const button = document.querySelector("button");
+      
+    //   if (answeredQuestions === totalQuestions) {
+    //     button.disabled = false;
+    //     button.style.opacity = "1";
+    //     button.style.cursor = "pointer";
+    //   } else {
+    //     button.disabled = true;
+    //     button.style.opacity = "0.5";
+    //     button.style.cursor = "not-allowed";
+    //   }
+    // }
+
+    // form.addEventListener("change", checkAllAnswered);
+
+    // checkAllAnswered();
+
+    let chart = null;
+
+    function calculateResult() {
+      const scores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+      // const scores = { R: 0, E: 0, C: 0, A: 0, S: 0, I: 0 };
+      const inputs = form.querySelectorAll("input[type=radio]:checked");
+
+      inputs.forEach(input => {
+        const [val, type] = input.value.split(",");
+        scores[type] += parseInt(val);
+      });
+
+      // găsim categoria dominantă
+      let max = Math.max(...Object.values(scores));
+      let dominant = Object.keys(scores).filter(k => scores[k] === max);
+
+      // afișăm scorurile
+      document.getElementById("result").innerHTML = "\nTipul tău dominant in ordine: <b>" + dominant.join(", ") + "</b><br><br>Scoruri detaliate:\n" +
+        Object.entries(scores).map(([k, v]) => `${descriptionMappingShort[k]}: ${v}`).join("<br>");
+
+      // descriere + rol asociat
+      document.getElementById("description").innerHTML =
+        "<h3>Interpretare</h3>" +
+        dominant.map(d => 
+          `<p>${descriptions[d]}<br></p>`
+        ).join("");
+        Object.keys(combinatii).forEach(combinatie => {
+          if(dominant.includes(combinatie[0]) && dominant.includes(combinatie[1]) && dominant.includes(combinatie[2])) {
+            document.getElementById("description").innerHTML += `<b>Combinatii posibile:</b><br>`;
+            document.getElementById("description").innerHTML += `<p><b>${combinatie}:</b> ${combinatii[combinatie]}<br></p>`;
+          }
+        });
+
+
+        document.getElementById("description").innerHTML += `
+        <br>------------<br>
+        Daca ai interbari suplimentare sau daca ai nevoie de sustinere si indrumare, ma poti contacta la <a href="mailto:sorin.neculae@gmail.com" target="_blank">sorin.neculae@gmail.com</a>`;
+
+      // desenăm graficul
+      const ctx = document.getElementById("riasecChart").getContext("2d");
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: [descriptionMappingShort['R'], descriptionMappingShort['I'], descriptionMappingShort['A'], descriptionMappingShort['S'], descriptionMappingShort['E'], descriptionMappingShort['C']],
+          // labels: [roleMappingShort['E'], roleMappingShort['C'], roleMappingShort['A'], roleMappingShort['S'], roleMappingShort['I']],
+          datasets: [{
+            label: "Scor",
+            data: [scores.R, scores.I, scores.A, scores.S, scores.E, scores.C],
+            // data: [
+            //   scores.E,
+            //   scores.C,
+            //   scores.A,
+            //   scores.S,
+            //   scores.I,
+            // ],
+            // backgroundColor: ["#dc3545", "#6c757d", "#ffc107",  "#17a2b8", "#28a745",]
+            backgroundColor: ["#0000FF","#28a745", "#ffc107", "#17a2b8",  "#dc3545", "#6c757d",]
+          }]
+        },
+        options: {
+          scales: { y: { beginAtZero: true, max: 35 } }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
