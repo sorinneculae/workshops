@@ -327,25 +327,25 @@
       form.appendChild(div);
     });
 
-    // function checkAllAnswered() {
-    //   const totalQuestions = questions.length;
-    //   const answeredQuestions = form.querySelectorAll("input[type=radio]:checked").length;
-    //   const button = document.querySelector("button");
+    function checkAllAnswered() {
+      const totalQuestions = questions.length;
+      const answeredQuestions = form.querySelectorAll("input[type=radio]:checked").length;
+      const button = document.querySelector("button");
       
-    //   if (answeredQuestions === totalQuestions) {
-    //     button.disabled = false;
-    //     button.style.opacity = "1";
-    //     button.style.cursor = "pointer";
-    //   } else {
-    //     button.disabled = true;
-    //     button.style.opacity = "0.5";
-    //     button.style.cursor = "not-allowed";
-    //   }
-    // }
+      if (answeredQuestions === totalQuestions) {
+        button.disabled = false;
+        button.style.opacity = "1";
+        button.style.cursor = "pointer";
+      } else {
+        button.disabled = true;
+        button.style.opacity = "0.5";
+        button.style.cursor = "not-allowed";
+      }
+    }
 
-    // form.addEventListener("change", checkAllAnswered);
+    form.addEventListener("change", checkAllAnswered);
 
-    // checkAllAnswered();
+    checkAllAnswered();
 
     let chart = null;
 
@@ -383,7 +383,7 @@
 
         document.getElementById("description").innerHTML += `
         <br>------------<br>
-        Daca ai interbari suplimentare sau daca ai nevoie de sustinere si indrumare, ma poti contacta la <a href="mailto:sorin.neculae@gmail.com" target="_blank">sorin.neculae@gmail.com</a>`;
+        Daca ai intrebari suplimentare sau daca ai nevoie de sustinere si indrumare, ma poti contacta la <a href="mailto:sorin.neculae@gmail.com" target="_blank">sorin.neculae@gmail.com</a>`;
 
       // desenăm graficul
       const ctx = document.getElementById("riasecChart").getContext("2d");
